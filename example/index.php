@@ -19,8 +19,6 @@
 </head>
 
 <body>
-    <a class="btn btn-primary btn-prev" href="#" role="button">Previous</a>
-    <a class="btn btn-primary btn-next" href="#" role="button">Next</a>
     <div id="calendar">
 
     </div>
@@ -36,14 +34,6 @@
     <script src="../dist/SimpleBookingCalendar.min.js"></script>
     <script>
         var calendar = new SimpleBookingCalendar('calendar', 'main.php');
-        $('.btn-prev').on('click', function(e){
-            e.preventDefault();
-            calendar.previous();
-        })
-        $('.btn-next').on('click', function(e){
-            e.preventDefault();
-            calendar.next();
-        })
         calendar.on('rangeselect', function(start, end){
             alert(`${start} to ${end}`);
         })

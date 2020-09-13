@@ -30,6 +30,8 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
    * @param {string|object} evtSrc ajax url string or jquery like ajax options object
    */
   function SimpleBookingCalendar(element, evtSrc) {
+    var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
     _classCallCheck(this, SimpleBookingCalendar);
 
     this._init_props();
@@ -39,6 +41,7 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
     if (elem) {
       this.calendarElement = elem;
       this.ajaxSrc = evtSrc;
+      this.extraOpts = opts;
       this.init();
     } else {
       throw "Element ID is required";
@@ -86,9 +89,9 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
         return {
           url: src,
           type: 'GET',
-          data: {
+          data: Object.assign(this.extraOpts, {
             date: this.toFullDateString(this.currentYear, this.currentMonth)
-          },
+          }),
           success: success.bind(this),
           complete: complete
         };
@@ -101,7 +104,7 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
   }, {
     key: "init",
     value: function init() {
-      this.calendarElement.innerHTML = '<table class="calendar"><caption class="calendar__banner--month"><h1 id="period_label"></h1></caption><thead><tr><th class="calendar__day__header">Sun</th><th class="calendar__day__header">Mon</th><th class="calendar__day__header">Tue</th><th class="calendar__day__header">Wed</th><th class="calendar__day__header">Thu</th><th class="calendar__day__header">Fri</th><th class="calendar__day__header">Sat</th></tr></thead><tbody id="calendarBody"></tbody></table>';
+      this.calendarElement.innerHTML = '<table class="calendar"><caption class="calendar__banner--month"><a class="btn btn-primary btnPrev pull-left" href="#" role="button">Previous</a><h1 id="period_label"></h1><a class="btn btn-primary btnNext pull-right" href="#" role="button">Next</a></caption><thead><tr><th class="calendar__day__header">Sun</th><th class="calendar__day__header">Mon</th><th class="calendar__day__header">Tue</th><th class="calendar__day__header">Wed</th><th class="calendar__day__header">Thu</th><th class="calendar__day__header">Fri</th><th class="calendar__day__header">Sat</th></tr></thead><tbody id="calendarBody"></tbody></table>';
       this.calendarBody = document.getElementById('calendarBody');
       this.calendarBody.addEventListener("mouseenter", function (_this) {
         return function (e) {
@@ -185,6 +188,20 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
           }
         };
       }(this), true);
+      this.calendarElement.querySelector('a.btnPrev').addEventListener('click', function (_this) {
+        return function (e) {
+          e.preventDefault();
+
+          _this.previous();
+        };
+      }(this));
+      this.calendarElement.querySelector('a.btnNext').addEventListener('click', function (_this) {
+        return function (e) {
+          e.preventDefault();
+
+          _this.next();
+        };
+      }(this));
       this.render();
     }
   }, {
@@ -296,7 +313,7 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
           bankholiday += 'data-bank-holiday=""';
         }
 
-        if (this.ajaxResponse[this.toFullDateString(year, month, index + 1)]) {
+        if (this.ajaxResponse && this.ajaxResponse[this.toFullDateString(year, month, index + 1)]) {
           tdata += "<td class=\"calendar__day__booked\" data-moon-phase=\"Booked\" data-date=\"".concat(this.toFullDateString(year, month, index + 1), "\" ").concat(bankholiday, ">").concat(index, "</td>");
         } else if (this.selectedStart && !this.selectedEnd) {
           tdata += "<td class=\"calendar__day__cell ".concat(this.toFullDateString(year, month, index + 1) == this.selectedStart ? 'hover_day' : null, "\"  data-date=\"").concat(this.toFullDateString(year, month, index + 1), "\" ").concat(bankholiday, ">").concat(index, "</td>");

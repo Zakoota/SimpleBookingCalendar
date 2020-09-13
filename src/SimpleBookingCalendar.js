@@ -6,12 +6,13 @@ class SimpleBookingCalendar {
      * @param {string} element ID of calendar element
      * @param {string|object} evtSrc ajax url string or jquery like ajax options object
      */
-    constructor(element, evtSrc) {
+    constructor(element, evtSrc, opts = {}) {
         this._init_props();
         let elem = document.getElementById(element);
         if (elem) {
             this.calendarElement = elem;
-            this.ajaxSrc = evtSrc
+            this.ajaxSrc = evtSrc;
+            this.extraOpts = opts;
             this.init();
         } else {
             throw "Element ID is required";
@@ -60,9 +61,9 @@ class SimpleBookingCalendar {
             return {
                 url: src,
                 type: 'GET',
-                data: {
+                data: Object.assign(this.extraOpts, {
                     date: this.toFullDateString(this.currentYear, this.currentMonth)
-                },
+                }),
                 success: success.bind(this),
                 complete: complete
             }
@@ -72,7 +73,7 @@ class SimpleBookingCalendar {
         }
     }
     init() {
-        this.calendarElement.innerHTML = '<table class="calendar"><caption class="calendar__banner--month"><h1 id="period_label"></h1></caption><thead><tr><th class="calendar__day__header">Sun</th><th class="calendar__day__header">Mon</th><th class="calendar__day__header">Tue</th><th class="calendar__day__header">Wed</th><th class="calendar__day__header">Thu</th><th class="calendar__day__header">Fri</th><th class="calendar__day__header">Sat</th></tr></thead><tbody id="calendarBody"></tbody></table>';
+        this.calendarElement.innerHTML = '<table class="calendar"><caption class="calendar__banner--month"><a class="btn btn-primary btnPrev pull-left" href="#" role="button">Previous</a><h1 id="period_label"></h1><a class="btn btn-primary btnNext pull-right" href="#" role="button">Next</a></caption><thead><tr><th class="calendar__day__header">Sun</th><th class="calendar__day__header">Mon</th><th class="calendar__day__header">Tue</th><th class="calendar__day__header">Wed</th><th class="calendar__day__header">Thu</th><th class="calendar__day__header">Fri</th><th class="calendar__day__header">Sat</th></tr></thead><tbody id="calendarBody"></tbody></table>';
         this.calendarBody = document.getElementById('calendarBody');
         this.calendarBody.addEventListener("mouseenter", (function (_this) {
             return function (e) {
@@ -151,7 +152,19 @@ class SimpleBookingCalendar {
                 }
             }
         })(this), true);
-        this.render();
+        this.calendarElement.querySelector('a.btnPrev').addEventListener('click', (function(_this){
+            return function(e){
+                e.preventDefault()
+                _this.previous();
+            }
+        })(this));   
+        this.calendarElement.querySelector('a.btnNext').addEventListener('click', (function(_this){
+            return function(e){
+                e.preventDefault()
+                _this.next();
+            }
+        })(this));
+        this.render();        
     }
     toFullDateString(year, month, day) {
         return new Date(year || this.currentYear, month || this.currentMonth, day || 2).toISOString().substr(0, 10);
@@ -232,7 +245,7 @@ class SimpleBookingCalendar {
             if (this._dateToUTC(this.toFullDateString(year, month, index + 1)) <= (new Date().getTime() - 8.64e+7)) {
                 bankholiday += 'data-bank-holiday=""';
             }
-            if (this.ajaxResponse[this.toFullDateString(year, month, index + 1)]) {
+            if (this.ajaxResponse && this.ajaxResponse[this.toFullDateString(year, month, index + 1)]) {
                 tdata += `<td class="calendar__day__booked" data-moon-phase="Booked" data-date="${this.toFullDateString(year, month, index+1)}" ${bankholiday}>${index}</td>`;
             } else if (this.selectedStart && !this.selectedEnd) {
                 tdata += `<td class="calendar__day__cell ${this.toFullDateString(year, month, index+1) == this.selectedStart ? 'hover_day' : null}"  data-date="${this.toFullDateString(year, month, index+1)}" ${bankholiday}>${index}</td>`;

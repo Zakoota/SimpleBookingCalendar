@@ -116,3 +116,10 @@ main {
     height: 1rem;
     text-transform: uppercase;
 }
+
+
+.selected_day,
+.hover_day {
+    background-color: dimgrey;
+    color: white;
+}
