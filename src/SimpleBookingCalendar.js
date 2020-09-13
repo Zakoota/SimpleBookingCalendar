@@ -18,17 +18,17 @@ class SimpleBookingCalendar {
         }
     }
     _init_props() {
-        calendarElement = null;
-        calendarBody = null;
-        ajaxSrc = null;
-        ajaxResponse = null;
-        selectedStart = null;
-        selectedEnd = null;
-        selectedGate = null;
-        currentMonth = new Date().getMonth();
-        currentYear = new Date().getFullYear();
-        _evts = [];
-        monthText = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        this.calendarElement = null;
+        this.calendarBody = null;
+        this.ajaxSrc = null;
+        this.ajaxResponse = null;
+        this.selectedStart = null;
+        this.selectedEnd = null;
+        this.selectedGate = null;
+        this.currentMonth = new Date().getMonth();
+        this.currentYear = new Date().getFullYear();
+        this._evts = [];
+        this.monthText = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     }
     /**
      * Returns selected start date if any
