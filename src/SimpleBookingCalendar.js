@@ -7,9 +7,9 @@ class SimpleBookingCalendar {
      * @param {string|object} evtSrc ajax url string or jquery like ajax options object
      */
     constructor(element, evtSrc) {
+        this._init_props();
         let elem = document.getElementById(element);
         if (elem) {
-            this._initProps()
             this.calendarElement = elem;
             this.ajaxSrc = evtSrc
             this.init();
@@ -17,18 +17,18 @@ class SimpleBookingCalendar {
             throw "Element ID is required";
         }
     }
-    _initProps() {
-        this.calendarElement = null;
-        this.calendarBody = null;
-        this.ajaxSrc = null;
-        this.ajaxResponse = null;
-        this.selectedStart = null;
-        this.selectedEnd = null;
-        this.selectedGate = null;
-        this.currentMonth = new Date().getMonth();
-        this.currentYear = new Date().getFullYear();
-        this._evts = [];
-        this.monthText = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    _init_props() {
+        calendarElement = null;
+        calendarBody = null;
+        ajaxSrc = null;
+        ajaxResponse = null;
+        selectedStart = null;
+        selectedEnd = null;
+        selectedGate = null;
+        currentMonth = new Date().getMonth();
+        currentYear = new Date().getFullYear();
+        _evts = [];
+        monthText = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     }
     /**
      * Returns selected start date if any
@@ -128,7 +128,7 @@ class SimpleBookingCalendar {
 
                             _this.selectedStart = null
                             target.classList.remove('selected_day')
-                        } else if (!_this.selectedEnd && !_this.selectedGate && _this._dateToUTC(target.getAttribute('data-date')) > _this._dateToUTC(_this.selectedStart)) {
+                        } else if (!_this.selectedEnd && !_this.selectedGate) {
                             _this.selectedEnd = target.getAttribute('data-date');
                             target.classList.add('selected_day')
 
@@ -171,6 +171,40 @@ class SimpleBookingCalendar {
         this.currentMonth = parseInt(month);
         this.render();
     }
+    /**
+     * Select a range programmatically
+     * 
+     * @param {Date} start Start date of selection
+     * @param {Date} end End date of selection
+     * @returns {boolean} returns true on all dates selection in provided range
+     */
+    select(start, end) {
+        this.selectedStart = this.toFullDateString(start.getFullYear(), start.getMonth(), start.getDate());
+        this.selectedEnd = this.toFullDateString(end.getFullYear(), end.getMonth(), end.getDate());
+        this.selectedGate = false;
+        let allDatesSelected = false;
+        this.calendarBody.querySelectorAll('td').forEach(element => {
+            element.classList.remove('hover_day')
+            if (this._dateToUTC(element.getAttribute('data-date')) <= currDate && this._dateToUTC(element.getAttribute('data-date')) > this._dateToUTC(this.selectedStart)) {
+                if (element.classList.contains('calendar__day__booked') || this.selectedGate) {
+                    allDatesSelected = false;
+                    return;
+                }
+                element.classList.add('hover_day');
+                allDatesSelected = true;
+            }
+        });
+        return allDatesSelected;
+    }
+    unselect() {
+        this.selectedStart = null;
+        this.selectedEnd = null;
+        this.calendarBody.querySelectorAll('td').forEach(element => {
+            if (element.classList.contains('hover_day')) {
+                element.classList.remove('hover_day')
+            }
+        });
+    }
     render(month = this.currentMonth, year = this.currentYear) {
         if (this.ajaxSrc) {
             function complete() {
@@ -194,14 +228,18 @@ class SimpleBookingCalendar {
                     tdata += '<td class="calendar__day__booked"></td>';
                 }
             }
+            let bankholiday = '';
+            if (this._dateToUTC(this.toFullDateString(year, month, index + 1)) <= (new Date().getTime() - 8.64e+7)) {
+                bankholiday += 'data-bank-holiday=""';
+            }
             if (this.ajaxResponse[this.toFullDateString(year, month, index + 1)]) {
-                tdata += `<td class="calendar__day__booked" data-moon-phase="Booked" data-date="${this.toFullDateString(year, month, index+1)}">${index}</td>`;
+                tdata += `<td class="calendar__day__booked" data-moon-phase="Booked" data-date="${this.toFullDateString(year, month, index+1)}" ${bankholiday}>${index}</td>`;
             } else if (this.selectedStart && !this.selectedEnd) {
-                tdata += `<td class="calendar__day__cell ${this.toFullDateString(year, month, index+1) == this.selectedStart ? 'hover_day' : null}"  data-date="${this.toFullDateString(year, month, index+1)}">${index}</td>`;
+                tdata += `<td class="calendar__day__cell ${this.toFullDateString(year, month, index+1) == this.selectedStart ? 'hover_day' : null}"  data-date="${this.toFullDateString(year, month, index+1)}" ${bankholiday}>${index}</td>`;
             } else if (this.selectedStart && this.selectedEnd) {
-                tdata += `<td class="calendar__day__cell ${(this.toFullDateString(year, month, index+1) >= this.selectedStart && this.toFullDateString(year, month, index+1) <= this.selectedEnd) ? 'hover_day' : null}"  data-date="${this.toFullDateString(year, month, index+1)}">${index}</td>`;
+                tdata += `<td class="calendar__day__cell ${(this.toFullDateString(year, month, index+1) >= this.selectedStart && this.toFullDateString(year, month, index+1) <= this.selectedEnd) ? 'hover_day' : null}"  data-date="${this.toFullDateString(year, month, index+1)}" ${bankholiday}>${index}</td>`;
             } else {
-                tdata += `<td class="calendar__day__cell"  data-date="${this.toFullDateString(year, month, index+1)}">${index}</td>`;
+                tdata += `<td class="calendar__day__cell"  data-date="${this.toFullDateString(year, month, index+1)}" ${bankholiday}>${index}</td>`;
             }
             if (index === days) {
                 let lastdayoftheweek = new Date(year, month, index).getDay() + 1;

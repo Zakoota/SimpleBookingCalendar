@@ -32,11 +32,11 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
   function SimpleBookingCalendar(element, evtSrc) {
     _classCallCheck(this, SimpleBookingCalendar);
 
+    this._init_props();
+
     var elem = document.getElementById(element);
 
     if (elem) {
-      this._initProps();
-
       this.calendarElement = elem;
       this.ajaxSrc = evtSrc;
       this.init();
@@ -46,19 +46,19 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
   }
 
   _createClass(SimpleBookingCalendar, [{
-    key: "_initProps",
-    value: function _initProps() {
-      this.calendarElement = null;
-      this.calendarBody = null;
-      this.ajaxSrc = null;
-      this.ajaxResponse = null;
-      this.selectedStart = null;
-      this.selectedEnd = null;
-      this.selectedGate = null;
-      this.currentMonth = new Date().getMonth();
-      this.currentYear = new Date().getFullYear();
-      this._evts = [];
-      this.monthText = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    key: "_init_props",
+    value: function _init_props() {
+      calendarElement = null;
+      calendarBody = null;
+      ajaxSrc = null;
+      ajaxResponse = null;
+      selectedStart = null;
+      selectedEnd = null;
+      selectedGate = null;
+      currentMonth = new Date().getMonth();
+      currentYear = new Date().getFullYear();
+      _evts = [];
+      monthText = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     }
     /**
      * Returns selected start date if any
@@ -163,7 +163,7 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
                 });
                 _this.selectedStart = null;
                 target.classList.remove('selected_day');
-              } else if (!_this.selectedEnd && !_this.selectedGate && _this._dateToUTC(target.getAttribute('data-date')) > _this._dateToUTC(_this.selectedStart)) {
+              } else if (!_this.selectedEnd && !_this.selectedGate) {
                 _this.selectedEnd = target.getAttribute('data-date');
                 target.classList.add('selected_day');
                 _this._evts['select'] && _this._evts['select'].forEach(function (evt) {
@@ -213,6 +213,49 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
       this.currentMonth = parseInt(month);
       this.render();
     }
+    /**
+     * Select a range programmatically
+     * 
+     * @param {Date} start Start date of selection
+     * @param {Date} end End date of selection
+     * @returns {boolean} returns true on all dates selection in provided range
+     */
+
+  }, {
+    key: "select",
+    value: function select(start, end) {
+      var _this2 = this;
+
+      this.selectedStart = this.toFullDateString(start.getFullYear(), start.getMonth(), start.getDate());
+      this.selectedEnd = this.toFullDateString(end.getFullYear(), end.getMonth(), end.getDate());
+      this.selectedGate = false;
+      var allDatesSelected = false;
+      this.calendarBody.querySelectorAll('td').forEach(function (element) {
+        element.classList.remove('hover_day');
+
+        if (_this2._dateToUTC(element.getAttribute('data-date')) <= currDate && _this2._dateToUTC(element.getAttribute('data-date')) > _this2._dateToUTC(_this2.selectedStart)) {
+          if (element.classList.contains('calendar__day__booked') || _this2.selectedGate) {
+            allDatesSelected = false;
+            return;
+          }
+
+          element.classList.add('hover_day');
+          allDatesSelected = true;
+        }
+      });
+      return allDatesSelected;
+    }
+  }, {
+    key: "unselect",
+    value: function unselect() {
+      this.selectedStart = null;
+      this.selectedEnd = null;
+      this.calendarBody.querySelectorAll('td').forEach(function (element) {
+        if (element.classList.contains('hover_day')) {
+          element.classList.remove('hover_day');
+        }
+      });
+    }
   }, {
     key: "render",
     value: function render() {
@@ -247,14 +290,20 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
           }
         }
 
+        var bankholiday = '';
+
+        if (this._dateToUTC(this.toFullDateString(year, month, index + 1)) <= new Date().getTime() - 8.64e+7) {
+          bankholiday += 'data-bank-holiday=""';
+        }
+
         if (this.ajaxResponse[this.toFullDateString(year, month, index + 1)]) {
-          tdata += "<td class=\"calendar__day__booked\" data-moon-phase=\"Booked\" data-date=\"".concat(this.toFullDateString(year, month, index + 1), "\">").concat(index, "</td>");
+          tdata += "<td class=\"calendar__day__booked\" data-moon-phase=\"Booked\" data-date=\"".concat(this.toFullDateString(year, month, index + 1), "\" ").concat(bankholiday, ">").concat(index, "</td>");
         } else if (this.selectedStart && !this.selectedEnd) {
-          tdata += "<td class=\"calendar__day__cell ".concat(this.toFullDateString(year, month, index + 1) == this.selectedStart ? 'hover_day' : null, "\"  data-date=\"").concat(this.toFullDateString(year, month, index + 1), "\">").concat(index, "</td>");
+          tdata += "<td class=\"calendar__day__cell ".concat(this.toFullDateString(year, month, index + 1) == this.selectedStart ? 'hover_day' : null, "\"  data-date=\"").concat(this.toFullDateString(year, month, index + 1), "\" ").concat(bankholiday, ">").concat(index, "</td>");
         } else if (this.selectedStart && this.selectedEnd) {
-          tdata += "<td class=\"calendar__day__cell ".concat(this.toFullDateString(year, month, index + 1) >= this.selectedStart && this.toFullDateString(year, month, index + 1) <= this.selectedEnd ? 'hover_day' : null, "\"  data-date=\"").concat(this.toFullDateString(year, month, index + 1), "\">").concat(index, "</td>");
+          tdata += "<td class=\"calendar__day__cell ".concat(this.toFullDateString(year, month, index + 1) >= this.selectedStart && this.toFullDateString(year, month, index + 1) <= this.selectedEnd ? 'hover_day' : null, "\"  data-date=\"").concat(this.toFullDateString(year, month, index + 1), "\" ").concat(bankholiday, ">").concat(index, "</td>");
         } else {
-          tdata += "<td class=\"calendar__day__cell\"  data-date=\"".concat(this.toFullDateString(year, month, index + 1), "\">").concat(index, "</td>");
+          tdata += "<td class=\"calendar__day__cell\"  data-date=\"".concat(this.toFullDateString(year, month, index + 1), "\" ").concat(bankholiday, ">").concat(index, "</td>");
         }
 
         if (index === days) {
