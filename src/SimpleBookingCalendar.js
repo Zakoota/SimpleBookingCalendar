@@ -23,6 +23,7 @@ class SimpleBookingCalendar {
         this.calendarBody = null;
         this.ajaxSrc = null;
         this.ajaxResponse = null;
+        this.disableUnselectStart = null;
         this.selectedStart = null;
         this.selectedEnd = null;
         this.selectedGate = null;
@@ -85,6 +86,9 @@ class SimpleBookingCalendar {
                             if (_this.selectedStart) {
                                 _this.selectedGate = false;
                                 _this.calendarBody.querySelectorAll('td').forEach(element => {
+                                    if (_this._dateToUTC(element.getAttribute('data-date')) == _this._dateToUTC(_this.selectedStart)) {
+                                        element.classList.add('selected_day');
+                                    }
                                     element.classList.remove('hover_day')
                                     if (_this._dateToUTC(element.getAttribute('data-date')) <= currDate && _this._dateToUTC(element.getAttribute('data-date')) > _this._dateToUTC(_this.selectedStart)) {
                                         if (element.classList.contains('calendar__day__booked') || _this.selectedGate) {
@@ -122,14 +126,14 @@ class SimpleBookingCalendar {
                             _this._evts['select'] && _this._evts['select'].forEach(function (evt) {
                                 evt('start', _this.selectedStart);
                             })
-                        } else if (target.getAttribute('data-date') == _this.selectedStart && !_this.selectedEnd) {
+                        } else if (!_this.disableUnselectStart && target.getAttribute('data-date') == _this.selectedStart && !_this.selectedEnd) {
                             _this._evts['unselect'] && _this._evts['unselect'].forEach(function (evt) {
                                 evt('start', _this.selectedStart);
                             })
 
                             _this.selectedStart = null
                             target.classList.remove('selected_day')
-                        } else if (!_this.selectedEnd && !_this.selectedGate) {
+                        } else if (!_this.selectedEnd && !_this.selectedGate && _this.selectedStart && _this._dateToUTC(_this.selectedStart) <= _this._dateToUTC(target.getAttribute('data-date'))) {
                             _this.selectedEnd = target.getAttribute('data-date');
                             target.classList.add('selected_day')
 
@@ -152,19 +156,19 @@ class SimpleBookingCalendar {
                 }
             }
         })(this), true);
-        this.calendarElement.querySelector('a.btnPrev').addEventListener('click', (function(_this){
-            return function(e){
+        this.calendarElement.querySelector('a.btnPrev').addEventListener('click', (function (_this) {
+            return function (e) {
                 e.preventDefault()
                 _this.previous();
             }
-        })(this));   
-        this.calendarElement.querySelector('a.btnNext').addEventListener('click', (function(_this){
-            return function(e){
+        })(this));
+        this.calendarElement.querySelector('a.btnNext').addEventListener('click', (function (_this) {
+            return function (e) {
                 e.preventDefault()
                 _this.next();
             }
         })(this));
-        this.render();        
+        this.render();
     }
     toFullDateString(year, month, day) {
         return new Date(year || this.currentYear, month || this.currentMonth, day || 2).toISOString().substr(0, 10);
@@ -191,22 +195,35 @@ class SimpleBookingCalendar {
      * @param {Date} end End date of selection
      * @returns {boolean} returns true on all dates selection in provided range
      */
-    select(start, end) {
-        this.selectedStart = this.toFullDateString(start.getFullYear(), start.getMonth(), start.getDate());
-        this.selectedEnd = this.toFullDateString(end.getFullYear(), end.getMonth(), end.getDate());
+    select(start, end, disableUnselectStart) {
+        this.disableUnselectStart = disableUnselectStart;
+        this.selectedStart = this.toFullDateString(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+        if (end) {
+            this.selectedEnd = this.toFullDateString(end.getFullYear(), end.getMonth(), end.getDate());
+        }
         this.selectedGate = false;
         let allDatesSelected = false;
-        this.calendarBody.querySelectorAll('td').forEach(element => {
-            element.classList.remove('hover_day')
-            if (this._dateToUTC(element.getAttribute('data-date')) <= currDate && this._dateToUTC(element.getAttribute('data-date')) > this._dateToUTC(this.selectedStart)) {
-                if (element.classList.contains('calendar__day__booked') || this.selectedGate) {
-                    allDatesSelected = false;
-                    return;
+        let currDate = new Date().getTime();
+        setTimeout(() => {
+            this.calendarBody.querySelectorAll('td').forEach(element => {
+                element.classList.remove('hover_day')
+                if (this._dateToUTC(element.getAttribute('data-date')) == this._dateToUTC(start.toISOString().substr(0, 10))) {
+                    element.classList.add('selected_day');
                 }
-                element.classList.add('hover_day');
-                allDatesSelected = true;
-            }
-        });
+                if (this._dateToUTC(element.getAttribute('data-date')) < this._dateToUTC(start.toISOString().substr(0, 10))) {
+                    element.setAttribute('data-bank-holiday', "");
+                }
+                if (this._dateToUTC(element.getAttribute('data-date')) <= currDate && this._dateToUTC(element.getAttribute('data-date')) > this._dateToUTC(this.selectedStart)) {
+                    if (element.classList.contains('calendar__day__booked') || this.selectedGate) {
+                        allDatesSelected = false;
+                        this.selectedGate = true;
+                        return;
+                    }
+                    element.classList.add('hover_day');
+                    allDatesSelected = true;
+                }
+            });
+        }, 500);
         return allDatesSelected;
     }
     unselect() {
