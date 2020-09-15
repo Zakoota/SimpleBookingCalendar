@@ -7,7 +7,7 @@ class SimpleBookingCalendar {
      * @param {string|object} evtSrc ajax url string or jquery like ajax options object
      */
     constructor(element, evtSrc, opts = {}) {
-        this._init_props();
+        this._initprops();
         let elem = document.getElementById(element);
         if (elem) {
             this.calendarElement = elem;
@@ -18,7 +18,7 @@ class SimpleBookingCalendar {
             throw "Element ID is required";
         }
     }
-    _init_props() {
+    _initprops() {
         this.calendarElement = null;
         this.calendarBody = null;
         this.ajaxSrc = null;
@@ -30,6 +30,7 @@ class SimpleBookingCalendar {
         this.currentMonth = new Date().getMonth();
         this.currentYear = new Date().getFullYear();
         this._evts = [];
+        this._coloredRanges = [];
         this.monthText = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     }
     /**
@@ -204,26 +205,6 @@ class SimpleBookingCalendar {
         this.selectedGate = false;
         let allDatesSelected = false;
         let currDate = new Date().getTime();
-        setTimeout(() => {
-            this.calendarBody.querySelectorAll('td').forEach(element => {
-                element.classList.remove('hover_day')
-                if (this._dateToUTC(element.getAttribute('data-date')) == this._dateToUTC(start.toISOString().substr(0, 10))) {
-                    element.classList.add('selected_day');
-                }
-                if (this._dateToUTC(element.getAttribute('data-date')) < this._dateToUTC(start.toISOString().substr(0, 10))) {
-                    element.setAttribute('data-bank-holiday', "");
-                }
-                if (this._dateToUTC(element.getAttribute('data-date')) <= currDate && this._dateToUTC(element.getAttribute('data-date')) > this._dateToUTC(this.selectedStart)) {
-                    if (element.classList.contains('calendar__day__booked') || this.selectedGate) {
-                        allDatesSelected = false;
-                        this.selectedGate = true;
-                        return;
-                    }
-                    element.classList.add('hover_day');
-                    allDatesSelected = true;
-                }
-            });
-        }, 500);
         return allDatesSelected;
     }
     unselect() {
@@ -263,7 +244,7 @@ class SimpleBookingCalendar {
                 bankholiday += 'data-bank-holiday=""';
             }
             if (this.ajaxResponse && this.ajaxResponse[this.toFullDateString(year, month, index + 1)]) {
-                tdata += `<td class="calendar__day__booked" data-moon-phase="Booked" data-date="${this.toFullDateString(year, month, index+1)}" ${bankholiday}>${index}</td>`;
+                tdata += `<td class="calendar__day__booked" data-moon-phase="Booked Orders# ${this.ajaxResponse[this.toFullDateString(year, month, index + 1)]}" data-date="${this.toFullDateString(year, month, index+1)}" ${bankholiday}>${index}</td>`;
             } else if (this.selectedStart && !this.selectedEnd) {
                 tdata += `<td class="calendar__day__cell ${this.toFullDateString(year, month, index+1) == this.selectedStart ? 'hover_day' : null}"  data-date="${this.toFullDateString(year, month, index+1)}" ${bankholiday}>${index}</td>`;
             } else if (this.selectedStart && this.selectedEnd) {
@@ -282,6 +263,7 @@ class SimpleBookingCalendar {
             }
         }
         this.calendarBody.innerHTML = tdata;
+        this._executeRange();
     }
     /**
      * Bind an event
@@ -294,6 +276,26 @@ class SimpleBookingCalendar {
             this._evts[evt] = []
         }
         this._evts[evt].push(func)
+    }
+    addRange(range) {
+        this._coloredRanges.push(range);
+    }
+    _executeRange() {
+        this._coloredRanges.forEach((function (_this) {
+            return function (range) {
+                _this.calendarBody.querySelectorAll('td').forEach((element) => {
+                    if (_this._dateToUTC(element.getAttribute('data-date')) == _this._dateToUTC(range.start)) {
+                        element.innerHTML += '<p style="font-size:12px">Check In</p>'
+                    }
+                    if (_this._dateToUTC(element.getAttribute('data-date')) == _this._dateToUTC(range.end)) {
+                        element.innerHTML += '<p style="font-size:12px">Check Out</p>'
+                    }
+                    if (_this._dateToUTC(element.getAttribute('data-date')) >= _this._dateToUTC(range.start) && _this._dateToUTC(element.getAttribute('data-date')) <= _this._dateToUTC(range.end)) {
+                        element.setAttribute("style", `background-color:${range.bgColor} !important; color:${range.fontColor} !important;`);
+                    }
+                });
+            }
+        })(this))
     }
     _ajax(opts) {
         let request;

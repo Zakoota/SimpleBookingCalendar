@@ -77,8 +77,8 @@ main {
 
 .calendar__day__cell[data-moon-phase],
 .calendar__day__booked[data-moon-phase] {
-    background-color: #e66053;
-    color: #4E4F4A;
+    background-color: grey;
+    color: white;
 }
 
 .calendar__day__cell[data-moon-phase]:after,
@@ -92,7 +92,6 @@ main {
     bottom: 0;
     width: 100%;
     height: 1rem;
-    text-transform: uppercase;
 }
 
 .calendar__day__cell[data-bank-holiday],
@@ -108,13 +107,31 @@ main {
     content: attr(data-bank-holiday);
     color: #F6E9DC;
     display: block;
-    font-size: .75rem;
+    font-size: x-small;
     font-weight: 400;
     position: absolute;
     bottom: 0;
     width: 100%;
     height: 1rem;
-    text-transform: uppercase;
+}
+
+.calendar__day__cell[data-extend-period],
+.calendar__day__booked[data-extend-period] {
+    background-color: red;
+    color: white;
+}
+
+.calendar__day__cell[data-extend-period]:after,
+.calendar__day__booked[data-extend-period]:after {
+    content: attr(data-extend-period);
+    color: #F6E9DC;
+    display: block;
+    font-weight: 400;
+    font-size: x-small;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 1rem;
 }
 
 .selected_day,

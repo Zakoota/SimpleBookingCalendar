@@ -34,7 +34,7 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
 
     _classCallCheck(this, SimpleBookingCalendar);
 
-    this._init_props();
+    this._initprops();
 
     var elem = document.getElementById(element);
 
@@ -49,8 +49,8 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
   }
 
   _createClass(SimpleBookingCalendar, [{
-    key: "_init_props",
-    value: function _init_props() {
+    key: "_initprops",
+    value: function _initprops() {
       this.calendarElement = null;
       this.calendarBody = null;
       this.ajaxSrc = null;
@@ -62,6 +62,7 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
       this.currentMonth = new Date().getMonth();
       this.currentYear = new Date().getFullYear();
       this._evts = [];
+      this._coloredRanges = [];
       this.monthText = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     }
     /**
@@ -246,8 +247,6 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
   }, {
     key: "select",
     value: function select(start, end, disableUnselectStart) {
-      var _this2 = this;
-
       this.disableUnselectStart = disableUnselectStart;
       this.selectedStart = this.toFullDateString(start.getFullYear(), start.getMonth(), start.getDate() + 1);
 
@@ -258,30 +257,6 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
       this.selectedGate = false;
       var allDatesSelected = false;
       var currDate = new Date().getTime();
-      setTimeout(function () {
-        _this2.calendarBody.querySelectorAll('td').forEach(function (element) {
-          element.classList.remove('hover_day');
-
-          if (_this2._dateToUTC(element.getAttribute('data-date')) == _this2._dateToUTC(start.toISOString().substr(0, 10))) {
-            element.classList.add('selected_day');
-          }
-
-          if (_this2._dateToUTC(element.getAttribute('data-date')) < _this2._dateToUTC(start.toISOString().substr(0, 10))) {
-            element.setAttribute('data-bank-holiday', "");
-          }
-
-          if (_this2._dateToUTC(element.getAttribute('data-date')) <= currDate && _this2._dateToUTC(element.getAttribute('data-date')) > _this2._dateToUTC(_this2.selectedStart)) {
-            if (element.classList.contains('calendar__day__booked') || _this2.selectedGate) {
-              allDatesSelected = false;
-              _this2.selectedGate = true;
-              return;
-            }
-
-            element.classList.add('hover_day');
-            allDatesSelected = true;
-          }
-        });
-      }, 500);
       return allDatesSelected;
     }
   }, {
@@ -336,7 +311,7 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
         }
 
         if (this.ajaxResponse && this.ajaxResponse[this.toFullDateString(year, month, index + 1)]) {
-          tdata += "<td class=\"calendar__day__booked\" data-moon-phase=\"Booked\" data-date=\"".concat(this.toFullDateString(year, month, index + 1), "\" ").concat(bankholiday, ">").concat(index, "</td>");
+          tdata += "<td class=\"calendar__day__booked\" data-moon-phase=\"Booked Orders# ".concat(this.ajaxResponse[this.toFullDateString(year, month, index + 1)], "\" data-date=\"").concat(this.toFullDateString(year, month, index + 1), "\" ").concat(bankholiday, ">").concat(index, "</td>");
         } else if (this.selectedStart && !this.selectedEnd) {
           tdata += "<td class=\"calendar__day__cell ".concat(this.toFullDateString(year, month, index + 1) == this.selectedStart ? 'hover_day' : null, "\"  data-date=\"").concat(this.toFullDateString(year, month, index + 1), "\" ").concat(bankholiday, ">").concat(index, "</td>");
         } else if (this.selectedStart && this.selectedEnd) {
@@ -359,6 +334,8 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
       }
 
       this.calendarBody.innerHTML = tdata;
+
+      this._executeRange();
     }
     /**
      * Bind an event
@@ -375,6 +352,32 @@ var SimpleBookingCalendar = /*#__PURE__*/function () {
       }
 
       this._evts[evt].push(func);
+    }
+  }, {
+    key: "addRange",
+    value: function addRange(range) {
+      this._coloredRanges.push(range);
+    }
+  }, {
+    key: "_executeRange",
+    value: function _executeRange() {
+      this._coloredRanges.forEach(function (_this) {
+        return function (range) {
+          _this.calendarBody.querySelectorAll('td').forEach(function (element) {
+            if (_this._dateToUTC(element.getAttribute('data-date')) == _this._dateToUTC(range.start)) {
+              element.innerHTML += '<p style="font-size:12px">Check In</p>';
+            }
+
+            if (_this._dateToUTC(element.getAttribute('data-date')) == _this._dateToUTC(range.end)) {
+              element.innerHTML += '<p style="font-size:12px">Check Out</p>';
+            }
+
+            if (_this._dateToUTC(element.getAttribute('data-date')) >= _this._dateToUTC(range.start) && _this._dateToUTC(element.getAttribute('data-date')) <= _this._dateToUTC(range.end)) {
+              element.setAttribute("style", "background-color:".concat(range.bgColor, " !important; color:").concat(range.fontColor, " !important;"));
+            }
+          });
+        };
+      }(this));
     }
   }, {
     key: "_ajax",
